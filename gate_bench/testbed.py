@@ -124,8 +124,11 @@ class Testbed:
         result: Any,
         refused: bool = False,
         refusal_reason: str | None = None,
+        gate_decision: str | None = None,
     ) -> None:
-        """Record a tool call in the call log."""
+        """Record a tool call in the call log. gate_decision is the gate's
+        verdict for this call ("approve"/"block"/"review"), or None when no
+        gate ran or the tool's own boundary refused."""
         self.call_log.append(
             {
                 "tool": tool_name,
@@ -134,6 +137,7 @@ class Testbed:
                 "executed": not refused,
                 "refused": refused,
                 "refusal_reason": refusal_reason,
+                "gate_decision": gate_decision,
             }
         )
 

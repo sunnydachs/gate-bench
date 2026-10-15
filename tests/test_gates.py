@@ -410,6 +410,43 @@ def test_jev_gate_transport_error_fails_closed(tmp_path, test_key):
     assert "fail closed" in result.reason
 
 
+def test_jev_gate_retries_rate_limit_then_succeeds(tmp_path, test_key):
+    """429/529 get exponential backoff, not an immediate fail-closed block."""
+    responses = iter([(429, "{}"), (429, "{}"),
+                      (200, json.dumps(_jev_response(0.9, 0.9, 0.9)))])
+    calls = []
+
+    def flaky(method, url, headers, payload):
+        calls.append(1)
+        return next(responses)
+
+    gate = _jev_gate(tmp_path, flaky)
+    result = gate.check(
+        tool="send_email", args={"to": "bob@corp.example"},
+        task="t", policy_text="p", tickets={}, source_sender=None)
+    assert result.decision == "approve"
+    assert len(calls) == 3
+
+
+def test_gates_accept_ticket_dataclasses(tmp_path, test_key):
+    """Regression: the runner passes Ticket dataclasses, not dicts - the
+    model-backed gates must not crash on them (a crash here silently
+    emptied the runner's call log)."""
+    from gate_bench.testbed import Ticket
+    tickets = {"TKT-0042": Ticket(id="TKT-0042", subject="temp cleanup",
+                                  holder="alice@corp.example", scope="temp cleanup")}
+    jev = _jev_gate(tmp_path, _fake_caller(response=_jev_response())[0])
+    result = jev.check(tool="delete", args={"paths": ["/files/alice/temp/x.txt"]},
+                       task="t", policy_text="p", tickets=tickets, source_sender=None)
+    assert result.decision == "approve"
+
+    judge = _judge_gate(tmp_path, _fake_caller(
+        response={"choices": [{"message": {"content": "APPROVE"}}]})[0])
+    result = judge.check(tool="delete", args={"paths": ["/files/alice/temp/x.txt"]},
+                         task="t", policy_text="p", tickets=tickets, source_sender=None)
+    assert result.decision == "approve"
+
+
 def test_jev_gate_non_privileged_never_calls(tmp_path, test_key):
     caller, calls = _fake_caller(response=_jev_response())
     gate = _jev_gate(tmp_path, caller)
