@@ -1,0 +1,31 @@
+name: Mark and close stale issues/PRs
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # weekly Sunday 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write   # create/remove the stale label, close stale items
+  pull-requests: write # label and close stale PRs
+
+# The cron fires weekly; if a manual dispatch overlaps it, the newer run wins.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  stale:
+    name: stale
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11
+        with:
+          days-before-stale: 30
+          days-before-close: 7
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          exempt-issue-labels: 'pinned,security'
+          exempt-pr-labels: 'pinned,security,dependencies'
+          operations: 'close,label'
+          # Dependabot PRs are exempt via the 'dependencies' label auto-applied
