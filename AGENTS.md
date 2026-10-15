@@ -2,6 +2,15 @@
 
 > Rules for AI Agents (Hermes, Codex, an agent CLI, Cursor) working in this repository.
 
+## What this repo is
+
+gate-bench measures whether a probability gate at the permission junction
+stops privilege-escalation prompt injections in tool-using agents - end-to-end
+attack success across Strands / LangGraph / CrewAI and four gate conditions.
+Read `SPEC.md` before changing anything: the corpus (`corpus/*.yaml`) is the
+experiment's core asset and changes to scenario semantics are experiment
+changes, not refactors.
+
 ---
 
 ## 0. Security & Secret Management (HARDLINE)
