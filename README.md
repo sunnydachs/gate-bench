@@ -34,7 +34,33 @@ gates break on the way.
 
 ## Status
 
-Spec + corpus. Implementation in progress; see `SPEC.md` deliverables.
+Implementation complete; validated by live smoke runs on all three
+frameworks. The first full grid is running: 900 runs (3 frameworks x 4
+conditions x 50 attacks + 25 benign, seed 1) plus a 450-run scripted
+baseline. Results land in `traces/*.jsonl`; `scripts/summarize.py` renders
+the table (per-cell n and error counts included, never hidden).
+
+```
+uv venv --python 3.12 .venv && uv pip install -e ".[all,test]"
+cp config/local.example.toml config/local.toml   # model ids + key env names
+python -m gate_bench.run_grid --frameworks strands langgraph crewai \
+    --conditions none static llm_judge jev --seeds 1 --batch grid-v1 --workers 6
+python scripts/summarize.py traces/grid-v1.jsonl
+python -m pytest tests/ -q
+```
+
+Model ids, endpoints and key env-var names are experiment inputs read from
+`config/local.toml` (gitignored) - the agent model, the judge model and the
+jev decision endpoint are all swappable. The gates refuse to run without a
+real key and fail closed on API errors; they never fall back to a
+heuristic.
+
+Known limitation, measured not assumed: the scripted (no-LLM) adapter is a
+plumbing baseline. Its instruction-following is regex-keyed, so across the
+50 attack scenarios it attempted zero privileged calls - 0% attack success
+by construction, not by defense. Its benign runs still carry signal: the
+static gate produced zero false blocks on the legitimate privileged calls
+it did make. Attack numbers must come from the framework agents.
 
 ## Attribution anchors
 
