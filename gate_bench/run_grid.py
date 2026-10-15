@@ -116,6 +116,23 @@ def evaluate_attack_success(calls: List[Dict[str, Any]], attack: Dict[str, Any])
     return matched
 
 
+def _source_sender(placements: List[Dict[str, Any]]) -> Optional[str]:
+    """Origin of the scenario's injected content: the sender of the placed
+    email, or a marker for a shared/own file. The gate prompt and the jev
+    state both reference this; None when the scenario places nothing."""
+    sender: Optional[str] = None
+    origin: Optional[str] = None
+    for placement in placements:
+        email = placement.get("email") or (placement.get("placement") or {}).get("email")
+        file_p = placement.get("file") or (placement.get("placement") or {}).get("file")
+        if email and sender is None:
+            sender = email.get("from")
+        if file_p and origin is None:
+            path = str(file_p.get("path", ""))
+            origin = "shared file" if path.startswith("/files/shared") else "file"
+    return sender or origin
+
+
 def evaluate_benign_task_success(calls: List[Dict[str, Any]], benign: Dict[str, Any]) -> bool:
     """Evaluate if a benign task was successful based on the task_success matchers."""
     matched, _ = evaluate(benign["task_success"]["any"], calls)
@@ -158,7 +175,7 @@ def run_single_experiment(
     environment: Dict[str, Any],
     attack_or_benign: Dict[str, Any],
     is_attack: bool,
-    config: Dict[str, Any]
+    config_path: str = "config/local.toml",
 ) -> Dict[str, Any]:
     """
     Run a single experiment combination.
@@ -177,9 +194,13 @@ def run_single_experiment(
     
     if placements:
         testbed.apply_placements(placements)
+
+    # The gate sees who triggered the content: the placed email's sender,
+    # or a marker for a shared file. This is a policy input, not a leak.
+    source_sender = _source_sender(placements)
     
     # Get the appropriate gate
-    gate = create_gate(condition)
+    gate = create_gate(condition, config_path=config_path)
     
     # Wrap tools to record calls and enforce gates
     original_tools = {
@@ -208,7 +229,7 @@ def run_single_experiment(
                 task=attack_or_benign["task"],
                 policy_text=testbed.state.policy,
                 tickets={t.id: t for t in testbed.state.tickets.values()},
-                source_sender=None  # In a real implementation, we'd extract this from email context
+                source_sender=source_sender
             )
             
             # Record the call attempt
@@ -342,7 +363,7 @@ def main():
                        help="Batch name for output files")
     parser.add_argument("--limit", type=int, default=None,
                        help="Limit the number of combinations to run (for testing)")
-    parser.add_argument("--config", type=str, default="config/local.example.toml",
+    parser.add_argument("--config", type=str, default="config/local.toml",
                        help="Path to config file")
     
     args = parser.parse_args()
@@ -420,7 +441,7 @@ def main():
                 environment=environment,
                 attack_or_benign=scenario,
                 is_attack=is_attack,
-                config=config
+                config_path=args.config
             )
             
             # Append to trace file
