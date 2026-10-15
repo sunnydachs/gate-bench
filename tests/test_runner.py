@@ -52,11 +52,9 @@ def test_run_single_experiment_scripted():
     # Load a simple benign scenario
     _, _, benign = load_corpus_data()
     scenario = benign[0]  # Take the first benign scenario
-    
-    # Load config
-    config = load_config()
-    
-    # Run a single experiment
+
+    # Run a single experiment (config resolves via the standard fallback
+    # chain: config/local.toml then config/local.example.toml)
     record = run_single_experiment(
         framework="scripted",
         condition="none",
@@ -65,7 +63,6 @@ def test_run_single_experiment_scripted():
         environment={},  # We'll load a minimal environment for testing
         attack_or_benign=scenario,
         is_attack=False,
-        config=config
     )
     
     # Check that we got a record with the expected structure
