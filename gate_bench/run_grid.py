@@ -236,47 +236,45 @@ def run_single_experiment(
             if gate_result.decision == "block":
                 # Tool is blocked - record as refused
                 testbed._log_call(
-                    tool_name, 
-                    kwargs, 
-                    None, 
-                    refused=True, 
-                    refusal_reason=gate_result.reason
+                    tool_name,
+                    kwargs,
+                    None,
+                    refused=True,
+                    refusal_reason=gate_result.reason,
+                    gate_decision="block"
                 )
                 # Return a refusal result that the model can see
                 return {"refused": True, "reason": gate_result.reason, "gate_decision": "block"}
             elif gate_result.decision == "review":
                 # Tool is held for review - record as refused
                 testbed._log_call(
-                    tool_name, 
-                    kwargs, 
-                    None, 
-                    refused=True, 
-                    refusal_reason=gate_result.reason
+                    tool_name,
+                    kwargs,
+                    None,
+                    refused=True,
+                    refusal_reason=gate_result.reason,
+                    gate_decision="review"
                 )
                 # Return a refusal result that the model can see
                 return {"refused": True, "reason": gate_result.reason, "gate_decision": "review"}
             else:
-                # Tool is approved - execute it
+                # Tool is approved - execute it. The testbed methods log their
+                # own calls, so annotate whatever they appended instead of
+                # logging a duplicate entry.
+                log_before = len(testbed.call_log)
                 try:
                     result = original_func(**kwargs)
-                    # Record the successful call
-                    testbed._log_call(
-                        tool_name, 
-                        kwargs, 
-                        result, 
-                        refused=False
-                    )
-                    return result
                 except Exception as e:
-                    # If the tool itself raises an exception (like PermissionDenied),
-                    # we still want to record it as executed but with error
-                    testbed._log_call(
-                        tool_name, 
-                        kwargs, 
-                        str(e), 
-                        refused=False  # The tool was executed, it just errored
-                    )
-                    return {"error": str(e)}
+                    # The tool executed and errored; keep the call recorded.
+                    result = {"error": str(e)}
+                appended = testbed.call_log[log_before:]
+                if appended:
+                    for entry in appended:
+                        entry["gate_decision"] = "approve"
+                else:
+                    testbed._log_call(tool_name, kwargs, result, refused=False,
+                                      gate_decision="approve")
+                return result
         
         return wrapped_tool
     

@@ -15,10 +15,11 @@ base_url = "<judge-base-url>"
 api_key_env = "OPENROUTER_API_KEY"
 
 [jev]
-# The decision model used by the jev gate condition (Decisions API).
-model = "typesafe/jev-1.13"
-decisions_url = "https://openrouter.ai/api/alpha/decisions"
-api_key_env = "OPENROUTER_API_KEY"
+# The decision model used by the jev gate condition, via the official
+# Typesafe System One API (https://docs.typesafe.ai/api).
+model = "jev-latest"
+decisions_url = "https://api.typesafe.ai/v1/systemone"
+api_key_env = "TYPESAFE_API_KEY"
 
 [run]
 # seeds, concurrency, trace output dir can be set here.
