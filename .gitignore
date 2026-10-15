@@ -35,3 +35,10 @@ venv/
 *.log
 .tmp/
 .cache/
+
+# gate-bench
+config/local.toml
+traces/
+artifacts/
+results/
+.pytest_cache/

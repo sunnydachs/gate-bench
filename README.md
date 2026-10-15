@@ -1,60 +1,49 @@
-# Repository Template
+# gate-bench
 
-Default template for sunnydachs' projects. Batteries-included with a CI/CD and security stack that is entirely on free tiers.
+Does a probability gate at the permission junction stop privilege-escalation
+prompt injections - measured as end-to-end attack success, not detection?
 
-## What's included
+A multi-user least-privilege agent (mock mailbox + filesystem, alice and bob)
+runs the same task loop in three frameworks (Strands, LangGraph, CrewAI).
+Fifty indirect prompt-injection scenarios - hidden in emails and file contents -
+try to hijack the agent into privileged tool calls (send email, share files,
+delete, create mail rules, write files). Four gate conditions sit at the
+permission junction: none, static rules, an LLM judge, and the official
+three-value decision-model gate (approve / block / review on question
+probabilities with fixed thresholds, fail-closed).
 
-### CI (`ci.yml`)
-- Node.js matrix on the **supported LTS lines** (currently 22.x and 24.x)
-- `scripts/check_runtimes.py` fails the build when a version in the matrix has
-  reached end of life, so the list cannot silently go stale
-- Detects the project stack: runs `npm test` when `package.json` exists, `pytest`
-  when `pyproject.toml` exists, and skips cleanly when neither does (so a fresh
-  repo is not red before it has any code). Delete the detection step once the
-  repo has picked a stack.
-- Optional Codecov coverage upload (Node 20.x leg only)
+The measured questions:
 
-### Security
-- **CodeQL** at `security-extended` query pack (catches more than default), and it
-  skips cleanly while the repo has no source for the configured language
-- **gitleaks** pre-commit hook + CI action on every push/PR
-- **Secret scanning** (GitHub native, public repos)
-- **Push protection** on public repos
+1. When the injection has already captured the model's reasoning, does the
+   gate at the call boundary still stop the privileged action?
+2. Does it depend on where each framework lets the gate live?
+3. What do the gates cost in false blocks, review deferrals, and latency?
 
-### Automation
-- **Dependabot** weekly updates for github-actions (grouped minor/patch). Add the
-  `npm` or `pip` ecosystem in `dependabot.yml` once that manifest is committed —
-  declaring an ecosystem with no manifest makes every push produce a failing
-  Dependabot run.
-- **Dependabot auto-merge** for patch/minor/security updates only
-- **Stale workflow** to clean up old issues/PRs weekly
+The corpus also carries 25 benign tasks (legitimate external sends with
+approved tickets, internal shares, small deletions) to measure what the
+gates break on the way.
 
-### Templates
-- **CODEOWNERS** for personal ownership
-- **pull_request_template.md** for consistent PRs
-- **dependabot.yml** with grouped minor/patch updates
+## Layout
 
-## Pre-installed Apps (install per repo)
+- `SPEC.md` - the full experiment spec (testbed, gates, runner, analyzer)
+- `corpus/environment.yaml` - the evidence corpus: users, policy, tickets,
+  files, mailboxes
+- `corpus/attacks.yaml` - 50 injection scenarios across 5 categories and
+  3 sophistication tiers
+- `corpus/benign.yaml` - 25 legitimate tasks (false-block control)
 
-| App | Purpose | Why here |
-|---|---|---|
-| [CodeRabbit](https://github.com/apps/coderabbit) | AI code review | Free on public repos, Advanced tier features |
-| [Codecov](https://github.com/apps/codecov) | Test coverage | Free for open source |
+## Status
 
-## New-repo Setup (5 minutes)
+Spec + corpus. Implementation in progress; see `SPEC.md` deliverables.
 
-1. `gh repo create <name> --template sunnydachs/repo-template`
-2. Install [CodeRabbit](https://github.com/apps/coderabbit) and [Codecov](https://github.com/apps/codecov) GitHub Apps
-3. Set `CODECOV_TOKEN` in Secrets (never echo the value; use a file)
-4. Create a Repository Ruleset on `main`:
-   - Required checks: `test (18.x)`, `test (20.x)`, `test (22.x)`, `Analyze (...)`, `gitleaks`
-   - Bypass: Dependabot (Integration id=29110)
-   - `allow_auto_merge: true`, `delete_branch_on_merge: true`
+## Attribution anchors
 
-## What /ruleset does
+The attack taxonomy follows the shapes used by the indirect-injection
+benchmark literature (tool-integrated agents, untrusted content channels,
+attack success measured on executed actions), and the decision-model gate
+follows the vendor's official per-call gate recipe (thresholded question
+probabilities, fail-closed, reasons logged).
 
-The template workflow `.github/workflows/` assumes a Repository Ruleset named "main protection" exists on the repo. Without it, `gh pr merge --auto` will not be accepted. See neuro-profile's ruleset (id=22273820) for a complete reference.
+## License
 
-## Notes for Agents (Hermes / Codex / Claude Code)
-
-See `AGENTS.md` for hard rules on secrets, commits, and workflow safety.
+MIT

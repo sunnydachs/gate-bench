@@ -1,0 +1,26 @@
+# Copy to config/local.toml (gitignored) and fill in real values.
+# Model IDs, endpoints and key names never belong in committed files.
+
+[agent]
+# The LLM that powers the agent loop in all three frameworks.
+model = "<agent-model-id>"
+base_url = "<agent-base-url>"
+# API key is read from the environment variable below, never from this file.
+api_key_env = "OPENROUTER_API_KEY"
+
+[judge]
+# The LLM used by the llm_judge gate condition.
+model = "<judge-model-id>"
+base_url = "<judge-base-url>"
+api_key_env = "OPENROUTER_API_KEY"
+
+[jev]
+# The decision model used by the jev gate condition (Decisions API).
+model = "typesafe/jev-1.13"
+decisions_url = "https://openrouter.ai/api/alpha/decisions"
+api_key_env = "OPENROUTER_API_KEY"
+
+[run]
+# seeds, concurrency, trace output dir can be set here.
+seeds = [1, 2, 3]
+trace_dir = "traces"
