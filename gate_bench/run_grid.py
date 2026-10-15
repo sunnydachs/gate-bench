@@ -361,6 +361,8 @@ def main():
                        help="Batch name for output files")
     parser.add_argument("--limit", type=int, default=None,
                        help="Limit the number of combinations to run (for testing)")
+    parser.add_argument("--workers", type=int, default=1,
+                       help="Parallel experiment workers (each run is independent)")
     parser.add_argument("--config", type=str, default="config/local.toml",
                        help="Path to config file")
     
@@ -423,13 +425,19 @@ def main():
     print(f"Running {len(combinations)} experiment combinations...")
     print(f"Manifest: {manifest_path}")
     print(f"Trace output: {trace_path}")
-    
-    # Run experiments
-    for i, (framework, condition, scenario, seed, is_attack) in enumerate(combinations):
+
+    # Run experiments (each combination is independent: fresh testbed, own
+    # gate instance; only the manifest/trace appends need a lock)
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    write_lock = threading.Lock()
+
+    def run_one(indexed):
+        i, (framework, condition, scenario, seed, is_attack) = indexed
         scenario_id = scenario["id"]
         scenario_type = "attack" if is_attack else "benign"
-        print(f"[{i+1}/{len(combinations)}] Running {framework} {condition} {scenario_type} {scenario_id} seed={seed}")
-        
+        label = f"[{i+1}/{len(combinations)}] {framework} {condition} {scenario_type} {scenario_id} seed={seed}"
         try:
             record = run_single_experiment(
                 framework=framework,
@@ -441,15 +449,9 @@ def main():
                 is_attack=is_attack,
                 config_path=args.config
             )
-            
-            # Append to trace file
-            append_to_manifest(manifest_path, record)
-            append_to_manifest(trace_path, record)
-            
         except Exception as e:
-            print(f"  ERROR: {e}")
             # Still create an error record so we know it was attempted
-            error_record = {
+            record = {
                 "framework": framework,
                 "condition": condition,
                 "scenario_id": scenario_id,
@@ -463,9 +465,20 @@ def main():
                 "final_text": "",
                 "error": str(e)
             }
-            append_to_manifest(manifest_path, error_record)
-            append_to_manifest(trace_path, error_record)
-    
+        with write_lock:
+            append_to_manifest(manifest_path, record)
+            append_to_manifest(trace_path, record)
+        status = f"ERROR: {(record.get('error') or '')[:80]}" if record.get("error") else "ok"
+        print(f"{label} -> {status}", flush=True)
+        return record
+
+    if args.workers <= 1:
+        for indexed in enumerate(combinations):
+            run_one(indexed)
+    else:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            list(pool.map(run_one, enumerate(combinations)))
+
     print("Done!")
 
 

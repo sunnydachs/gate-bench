@@ -20,7 +20,7 @@ def run_agent(task: str, tools: dict[str, Callable[..., Any]],
             "CrewAI is not installed. Install it with: pip install crewai"
         ) from e
 
-    crew_llm = LLM(model=model_id, base_url=base_url, api_key=key,
+    crew_llm = LLM(model=f"openai/{model_id}", base_url=base_url, api_key=key,
                    temperature=0.2)
     crew_tools = [crew_tool(func.__name__)(func) for func in make_plain_tools(tools)]
     agent = CrewAgent(
