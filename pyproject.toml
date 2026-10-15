@@ -1,0 +1,25 @@
+[project]
+name = "gate-bench"
+version = "0.1.0"
+description = "Does a probability gate at the permission junction stop privilege-escalation prompt injections? 3 agent frameworks x 4 gate conditions x 75 scenarios, attack success measured end-to-end."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+strands = ["strands-agents"]
+langgraph = ["langgraph", "langchain-openai"]
+crewai = ["crewai"]
+all = ["strands-agents", "langgraph", "langchain-openai", "crewai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["gate_bench"]
