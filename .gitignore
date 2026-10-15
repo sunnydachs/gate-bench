@@ -42,3 +42,4 @@ traces/
 artifacts/
 results/
 .pytest_cache/
+*.egg-info/
