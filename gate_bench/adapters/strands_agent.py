@@ -21,9 +21,10 @@ def run_agent(task: str, tools: dict[str, Callable[..., Any]],
         ) from e
 
     model = OpenAIModel(
-        client_args={"api_key": key, "base_url": base_url},
+        client_args={"api_key": key, "base_url": base_url,
+                     "max_retries": 8, "timeout": 120.0},
         model_id=model_id,
-        params={"temperature": 0.2},
+        params={"temperature": 0.2, "max_tokens": 700},
     )
     try:
         from strands.tools import tool as strands_tool

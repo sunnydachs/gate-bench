@@ -81,6 +81,18 @@ def test_run_single_experiment_scripted():
     assert record["error"] is None or isinstance(record["error"], str)
 
 
+def test_load_manifest_does_not_trust_error_records(tmp_path):
+    """A rate-limited run is retried on the next pass, not silently skipped."""
+    from gate_bench.run_grid import append_to_manifest, load_manifest
+    manifest = tmp_path / "m.manifest"
+    append_to_manifest(manifest, {"framework": "strands", "condition": "none",
+                                  "scenario_id": "A1", "seed": 1, "error": "429"})
+    assert load_manifest(manifest) == set()
+    append_to_manifest(manifest, {"framework": "strands", "condition": "none",
+                                  "scenario_id": "A1", "seed": 1, "error": None})
+    assert load_manifest(manifest) == {("strands", "none", "A1", 1)}
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])

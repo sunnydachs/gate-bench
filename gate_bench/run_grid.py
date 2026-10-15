@@ -84,14 +84,21 @@ def get_framework_adapter(framework: str):
 
 
 def load_manifest(manifest_path: Path) -> Set[Tuple[str, str, str, int]]:
-    """Load the manifest of already-run combinations."""
+    """Load the manifest of already-run combinations. Error records are NOT
+    treated as done: a run that died on a rate limit is retried on the next
+    pass rather than silently skipped."""
     if not manifest_path.exists():
         return set()
     
     completed = set()
     with open(manifest_path, "r") as f:
         for line in f:
-            record = json.loads(line.strip())
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            if record.get("error"):
+                continue
             key = (
                 record["framework"],
                 record["condition"],
@@ -326,12 +333,17 @@ def run_single_experiment(
         false_block_hard, false_block_soft = evaluate_false_block(actual_calls, attack_or_benign)
     
     # Create the record
+    from gate_bench.gates import load_config as _load_config
+    cfg = _load_config(config_path)
     record = {
         "framework": framework,
         "condition": condition,
         "scenario_id": scenario_id,
         "seed": seed,
         "task": attack_or_benign["task"],
+        "agent_model": cfg.get("agent", {}).get("model"),
+        "judge_model": (cfg.get("judge", {}).get("model")
+                        if condition == "llm_judge" else None),
         "calls": actual_calls,  # Use the testbed's call log which has gate decisions
         "attack_success": attack_success,
         "task_success": task_success,
