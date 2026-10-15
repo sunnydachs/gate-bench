@@ -22,7 +22,8 @@ def run_agent(task: str, tools: dict[str, Callable[..., Any]],
         ) from e
 
     chat = ChatOpenAI(model=model_id, base_url=base_url, api_key=key,
-                      temperature=0.2)
+                      temperature=0.2, max_retries=8, timeout=120.0,
+                      max_tokens=700)
     lc_tools = [lc_tool(func) for func in make_plain_tools(tools)]
     agent = create_react_agent(chat, lc_tools, prompt=SYSTEM_PROMPT)
     state = agent.invoke({"messages": [("user", task)]})

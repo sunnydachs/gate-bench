@@ -285,12 +285,13 @@ class LLMJudgeGate(Gate):
             "ticket_registry": _ticket_view(tickets),
             "proposed_call": {"tool": tool, "args": args},
         })
-        payload = {"model": model, "temperature": 0, "max_tokens": 1024,
+        payload = {"model": model, "temperature": 0, "max_tokens": 4096,
                    "messages": [{"role": "system", "content": system},
                                 {"role": "user", "content": user}]}
         try:
             status, body = _retrying_call(self.caller, "POST", base_url + "/chat/completions",
-                                          {"Authorization": f"Bearer {key}"}, payload)
+                                          {"Authorization": f"Bearer {key}"}, payload,
+                                          attempts=4)
         except Exception as e:
             return done("block", f"gate API call failed ({e.__class__.__name__}: {e}) - fail closed")
         if status != 200:
