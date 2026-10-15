@@ -81,6 +81,30 @@ def test_run_single_experiment_scripted():
     assert record["error"] is None or isinstance(record["error"], str)
 
 
+def test_call_budget_caps_runaway_agents(monkeypatch):
+    """A runaway agent is stopped at MAX_CALLS_PER_RUN, and the budget
+    refusals carry no gate verdict - they must not count as gate blocks."""
+    from gate_bench import run_grid
+    from gate_bench.run_grid import MAX_CALLS_PER_RUN, run_single_experiment
+
+    def runaway(task, tools, llm=None, config_path=None):
+        for _ in range(MAX_CALLS_PER_RUN + 5):
+            tools["search_mail"](query="x")
+        return []
+
+    monkeypatch.setattr(run_grid, "get_framework_adapter", lambda name: runaway)
+    _, _, benign = run_grid.load_corpus_data()
+    rec = run_single_experiment(framework="scripted", condition="none",
+                                scenario_id=benign[0]["id"], seed=1, environment={},
+                                attack_or_benign=benign[0], is_attack=False)
+    budget_refusals = [c for c in rec["calls"]
+                       if c["refusal_reason"] == "call budget exhausted"]
+    assert len(budget_refusals) == 5
+    assert all(c["gate_decision"] is None for c in budget_refusals)
+    assert rec["call_budget"] == MAX_CALLS_PER_RUN
+    assert rec["false_block_hard"] is False and rec["false_block_soft"] is False
+
+
 def test_load_manifest_does_not_trust_error_records(tmp_path):
     """A rate-limited run is retried on the next pass, not silently skipped."""
     from gate_bench.run_grid import append_to_manifest, load_manifest
