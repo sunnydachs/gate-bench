@@ -41,7 +41,10 @@ def load_corpus():
     return {a["id"]: a for a in attacks}, {b["id"]: b for b in benign}
 
 
-def load_records(paths: list[str]) -> tuple[list[dict], int]:
+def load_records(paths: list[str]) -> list[dict]:
+    """Raw records in file order, no dedupe - dedupe must happen AFTER any
+    model filter, or a clean record from another serving lane silently
+    deletes this lane's record for the same key."""
     records = []
     for path in paths:
         with open(path, encoding="utf-8") as f:
@@ -49,9 +52,21 @@ def load_records(paths: list[str]) -> tuple[list[dict], int]:
                 line = line.strip()
                 if line:
                     records.append(json.loads(line))
-    # last record wins per key (retried runs replace their error records)
-    by_key = {(r["framework"], r["condition"], r["scenario_id"], r["seed"]): r
-              for r in records}
+    return records
+
+
+def dedupe(records: list[dict]) -> tuple[list[dict], int]:
+    """One record per key, CLEAN WINS: a later clean record supersedes an
+    earlier clean one, but an error record never supersedes a clean record -
+    it only fills keys with no clean record yet."""
+    by_key: dict[tuple, dict] = {}
+    for r in records:
+        key = (r["framework"], r["condition"], r["scenario_id"], r["seed"])
+        prev = by_key.get(key)
+        if prev is None or prev.get("error"):
+            by_key[key] = r
+        elif not r.get("error"):
+            by_key[key] = r
     return list(by_key.values()), len(records) - len(by_key)
 
 
@@ -141,12 +156,30 @@ def print_table(cells: dict, by_category: bool = False) -> None:
 
 
 def main() -> int:
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    by_category = "--by-category" in sys.argv
-    if not args:
+    argv = sys.argv[1:]
+    paths: list[str] = []
+    by_category = False
+    model_filter = None
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--by-category":
+            by_category = True
+        elif a == "--model" and i + 1 < len(argv):
+            model_filter = argv[i + 1]
+            i += 1
+        else:
+            paths.append(a)
+        i += 1
+    if not paths:
         print(__doc__)
         return 2
-    records, superseded = load_records(args)
+    records = load_records(paths)
+    if model_filter:
+        before = len(records)
+        records = [r for r in records if model_filter in str(r.get("agent_model"))]
+        print(f"model filter: {model_filter!r} -> {len(records)} of {before} runs")
+    records, superseded = dedupe(records)
     attacks, benign = load_corpus()
     models = collections.Counter(str(r.get("agent_model") or "unrecorded")
                                  for r in records)

@@ -25,13 +25,17 @@ def load(paths: list[str]) -> list[dict]:
 
 
 def dedupe(records: list[dict]) -> tuple[list[dict], int]:
-    """One record per (framework, condition, scenario_id, seed): a later
-    record supersedes an earlier one, so a retried run replaces the error
-    record it retried. Returns (kept records, superseded count)."""
+    """One record per (framework, condition, scenario_id, seed), CLEAN WINS:
+    a later clean record supersedes an earlier clean one, but an error
+    record never supersedes a clean record - it only fills empty keys."""
     by_key: dict[tuple, dict] = {}
     for rec in records:
         key = (rec["framework"], rec["condition"], rec["scenario_id"], rec["seed"])
-        by_key[key] = rec
+        prev = by_key.get(key)
+        if prev is None or prev.get("error"):
+            by_key[key] = rec
+        elif not rec.get("error"):
+            by_key[key] = rec
     return list(by_key.values()), len(records) - len(by_key)
 
 

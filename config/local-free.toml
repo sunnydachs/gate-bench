@@ -1,0 +1,22 @@
+# Free-pool config for the grid-v5 serving lane (OpenRouter :free models).
+# The account's free-models-per-day budget resets at UTC midnight (09:00 JST);
+# the resilient loop for this batch is gated to start after that reset.
+
+[agent]
+model = "nvidia/nemotron-3.5-lightning:free"
+base_url = "https://openrouter.ai/api/v1"
+api_key_env = "OPENROUTER_API_KEY"
+
+[judge]
+model = "nvidia/nemotron-3-super-120b-a12b:free"
+base_url = "https://openrouter.ai/api/v1"
+api_key_env = "OPENROUTER_API_KEY"
+
+[jev]
+model = "jev-latest"
+decisions_url = "https://api.typesafe.ai/v1/systemone"
+api_key_env = "TYPESAFE_API_KEY"
+
+[run]
+seeds = [1, 2, 3]
+trace_dir = "traces"

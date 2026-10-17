@@ -28,6 +28,16 @@ def test_dedupe_last_record_wins():
     assert len(kept) == 1 and kept[0]["attack_success"] is True
 
 
+def test_dedupe_error_never_supersedes_clean():
+    """A later error record must not throw away an earlier clean record for
+    the same key - the runner stamps agent_model on adapter-level error
+    records too, so naive last-wins silently deletes good data."""
+    rows = [_record(success=True), _record(error="429")]
+    kept, superseded = summarize_mod.dedupe(rows)
+    assert len(kept) == 1 and kept[0]["error"] is None
+    assert kept[0]["attack_success"] is True
+
+
 def test_dedupe_keeps_distinct_keys():
     rows = [_record(scenario_id="A1"), _record(scenario_id="A2"),
             _record(condition="static")]
