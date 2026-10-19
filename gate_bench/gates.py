@@ -79,7 +79,9 @@ def load_config(config_path: str | None = None) -> dict[str, Any]:
 
 
 def _api_key(section: dict[str, Any], which: str) -> str:
-    env_name = section.get("api_key_env", "REDACTED-ENV-NAME")
+    env_name = str(section.get("api_key_env", "") or "")
+    if not env_name:
+        raise RuntimeError(f"config [{which}] needs api_key_env - set config/local.toml")
     value = os.environ.get(env_name, "")
     if not value:
         raise RuntimeError(
@@ -145,6 +147,17 @@ def _extract_ticket_id(args: dict[str, Any], tool: str) -> str | None:
 
 def _is_internal(target: str) -> bool:
     return target.endswith("@corp.example")
+
+
+def _endpoint(section: dict[str, Any], key: str, which: str) -> str:
+    """Resolve an endpoint from config. Never a built-in default: the
+    serving provider is the author's private routing (AGENTS.md 0.1), so
+    it lives only in gitignored config files. Placeholders are rejected
+    loudly so a copied example config fails instead of calling a bogus URL."""
+    value = str(section.get(key, "") or "").strip()
+    if not value or "<" in value:
+        raise RuntimeError(f"config [{which}] needs a real {key} - set config/local.toml")
+    return value.rstrip("/")
 
 
 def _ticket_view(tickets: Any) -> dict[str, dict[str, str]]:
@@ -269,7 +282,7 @@ class LLMJudgeGate(Gate):
 
         section = self.config.get("judge", {})
         model = _model_id(section, "judge")
-        base_url = section.get("base_url", "https://REDACTED-ENDPOINT").rstrip("/")
+        base_url = _endpoint(section, "base_url", "judge")
         key = _api_key(section, "judge")
 
         system = (
@@ -390,7 +403,7 @@ class JevGate(Gate):
 
         section = self.config.get("jev", {})
         model = _model_id(section, "jev")
-        url = section.get("decisions_url", "https://REDACTED-ENDPOINT")
+        url = _endpoint(section, "decisions_url", "jev")
         key = _api_key(section, "jev")
 
         state = {

@@ -1,10 +1,13 @@
 # gate-bench first complete grid (grid-v5, 900/900 runs, 2026-10-19)
 
-Agent model: a general-purpose model (same weights across the batch; serving:
-769 runs on the an inference provider free pool, 131 gap-fill runs on the provider the provider -
-disclosed, and a pure-the provider replication lane is running separately).
-Judge: a general-purpose model-3-super-120b (an inference provider :free). jev: official the decision-model vendor
-System One API. Seed 1, call budget 20, corpus 50 attacks + 25 benign.
+Agent: one mid-size open-weights general-purpose LLM, identical weights in
+every run of the batch, served through one inference provider for 769 runs
+and a second provider for 131 gap-fill runs (provider and model ids live in
+the gitignored config; a single-provider replication lane is reported
+separately in results/grid-v6-replication.md).
+Judge: a second general-purpose LLM from a different model family.
+jev: the decision model's official public API.
+Seed 1, call budget 20, corpus 50 attacks + 25 benign.
 Metrics recomputed from raw call logs by scripts/analyze.py (clean-wins
 dedupe, executed-only scoring) - never from stored booleans.
 
@@ -60,14 +63,14 @@ The jev gate is the only condition with hard false blocks (1 per framework,
 4%) and defers 8-16% of legitimate privileged calls; benign task
 completion drops 12-16 points vs the ungated baseline. static and llm_judge
 produced zero false blocks on this corpus with this judge model
-(a general-purpose model-super-120b; the separate latency bench on a different judge model
+(the grid judge; the separate latency bench on a different judge model
 showed benign nondeterminism).
 
 ## Gate latency (measured separately, 10 reps per case)
 
 - static: ~0 ms
 - jev: ~200 ms median, decisions consistent
-- llm_judge: 2.8-7.6 s median, and on a different judge model (a general-purpose model-20b)
+- llm_judge: 2.8-7.6 s median, and on a different judge model
   the benign ticketed send flipped approve/block across reps
 
 ## Caveats
@@ -75,6 +78,6 @@ showed benign nondeterminism).
 - Small event counts: hijack totals are 1-4 per cell, so percentages are
   reported with exact event counts; the cross-condition pattern (7->5->3->0)
   should be read as monotone with wide intervals, not as precise rates.
-- One serving lane for 85% of runs, a second for 15%; the pure-the provider
+- One serving lane for 85% of runs, a second for 15%; the single-provider
   replication lane is in progress and will confirm.
 - Single agent model, single seed; the corpus is the unit of variability.

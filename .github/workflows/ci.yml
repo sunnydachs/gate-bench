@@ -50,3 +50,6 @@ jobs:
 
     - name: Run tests
       run: python -m pytest -q
+
+    - name: Privacy check (no provider/model identifiers in tracked files)
+      run: python scripts/privacy_check.py

@@ -38,6 +38,7 @@ venv/
 
 # gate-bench
 config/local.toml
+config/local-*.toml
 traces/
 artifacts/
 # results/ holds curated result tables - kept in git

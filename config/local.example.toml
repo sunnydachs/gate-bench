@@ -6,20 +6,21 @@
 model = "<agent-model-id>"
 base_url = "<agent-base-url>"
 # API key is read from the environment variable below, never from this file.
-api_key_env = "REDACTED-ENV-NAME"
+api_key_env = "<PROVIDER_API_KEY_ENV>"
 
 [judge]
 # The LLM used by the llm_judge gate condition.
 model = "<judge-model-id>"
 base_url = "<judge-base-url>"
-api_key_env = "REDACTED-ENV-NAME"
+api_key_env = "<PROVIDER_API_KEY_ENV>"
 
 [jev]
-# The decision model used by the jev gate condition, via the official
-# the decision-model vendor System One API (https://docs.the decision-model vendor.ai/api).
-model = "jev-latest"
-decisions_url = "https://REDACTED-ENDPOINT"
-api_key_env = "REDACTED-ENV-NAME"
+# The decision model used by the jev gate condition, via the decision
+# model's official API. The vendor's public docs carry the model id and
+# the decisions endpoint; the key resolves from the env var named here.
+model = "<decision-model-id>"
+decisions_url = "<decision-api-endpoint>"
+api_key_env = "<DECISION_API_KEY_ENV>"
 
 [run]
 # seeds, concurrency, trace output dir can be set here.

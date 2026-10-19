@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from typing import Any, Callable
 
-from gate_bench.gates import load_config
+from gate_bench.gates import _endpoint, load_config
 
 TOOL_NAMES = ["search_mail", "search_files", "read", "summarize", "send_email",
               "share_file", "delete", "create_rule", "write_file"]
@@ -33,8 +33,10 @@ def agent_config(config_path: str | None = None) -> tuple[str, str, str]:
         raise RuntimeError(
             "config [agent] has no real model id (found "
             f"{model!r}); set config/local.toml")
-    base_url = (section.get("base_url", "https://REDACTED-ENDPOINT") or "").rstrip("/")
-    env_name = section.get("api_key_env", "REDACTED-ENV-NAME")
+    base_url = _endpoint(section, "base_url", "agent")
+    env_name = str(section.get("api_key_env", "") or "")
+    if not env_name:
+        raise RuntimeError("config [agent] needs api_key_env - set config/local.toml")
     key = os.environ.get(env_name, "")
     if not key:
         raise RuntimeError(

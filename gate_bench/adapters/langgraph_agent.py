@@ -1,5 +1,5 @@
 """gate-bench LangGraph agent adapter: real create_react_agent loop on an
-OpenAI-compatible endpoint (an inference provider)."""
+OpenAI-compatible endpoint (any provider)."""
 from __future__ import annotations
 
 from typing import Any, Callable

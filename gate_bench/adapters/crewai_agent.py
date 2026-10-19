@@ -1,5 +1,5 @@
 """gate-bench CrewAI agent adapter: real single-agent crew on an
-OpenAI-compatible endpoint (an inference provider)."""
+OpenAI-compatible endpoint (any provider)."""
 from __future__ import annotations
 
 from typing import Any, Callable

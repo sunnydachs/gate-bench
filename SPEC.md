@@ -40,8 +40,9 @@ Gate conditions (the grid's second axis)
              is blocked; no-deletion lists. (A fair "dumb rules" baseline.)
 3. llm_judge - one LLM call: policy + call + task -> verdict approve/block,
              parsed strictly; unparseable => review.
-4. jev     - official 3-value gate per the an inference provider/the decision-model vendor recipe:
-             POST https://REDACTED-ENDPOINT
+4. jev     - official 3-value gate per the decision model's public API:
+             POST to its documented decisions endpoint (URL lives in local
+             config)
              {model: <jev model>, state: {call, task, policy_summary,
              tickets, sender_of_source_email}, questions: {
                within_user_permissions: {type: "noul", instructions: "..."},
@@ -86,8 +87,9 @@ Configuration (never committed)
 ---
 - config/local.toml (gitignored; see config/local.example.toml):
   agent model id + endpoint, judge model id, jev model id, base URLs.
-- REDACTED-ENV-NAME from the environment only. No model ids or endpoints in
-  committed files, tests, or fixtures.
+- the provider API key from the environment only (env var name in local
+  config). No model ids, endpoints, or provider names in committed files,
+  tests, or fixtures.
 
 Constraints
 ---

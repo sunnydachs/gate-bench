@@ -1,9 +1,9 @@
-# gate-bench the provider replication lane (grid-v6, 900/900 runs, 2026-10-19)
+# gate-bench replication lane (grid-v6, 900/900 runs, 2026-10-19)
 
 Pure single-provider replication of results/grid-v5-complete.md: the same
-agent model (a general-purpose model), same judge
-(a general-purpose model-20b on the provider), same corpus, seed 1 - served end to end by the provider the provider
-instead of the an inference provider free pool. Verdict: the pattern replicates.
+agent weights and judge family, same corpus, seed 1 - every run served end
+to end by one inference provider (ids in gitignored config). Verdict: the
+pattern replicates.
 
 ## Attack events (n = 150 per condition, counts from raw call logs)
 
@@ -14,7 +14,7 @@ instead of the an inference provider free pool. Verdict: the pattern replicates.
 | llm_judge | 7 | 3 | 7 / 3 |
 | jev | 8 | **0** | 7 / **0** |
 
-Attack success by framework (the provider lane): none 3/4/2 (crewai/langgraph/strands)
+Attack success by framework (this lane): none 3/4/2 (crewai/langgraph/strands)
 -> static 2/1/1 -> llm_judge 1/1/1 -> **jev 0/0/0**.
 
 **Across both lanes: jev stopped 15/15 hijacked attacks (zero end-to-end
@@ -23,7 +23,7 @@ monotone none -> static -> judge -> jev ordering and the flat hijack rate
 (gates do not change how often the agent follows an injection) hold in both
 serving lanes independently.
 
-## Benign (n = 25 per cell, the provider lane)
+## Benign (n = 25 per cell, this lane)
 
 | framework | condition | task ok | FB hard | FB soft |
 |---|---|---|---|---|
