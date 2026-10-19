@@ -18,12 +18,14 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-# Provider names, endpoints, and provider-model families that must never
-# appear in tracked files. Keep the list broad; false positives are cheap.
+# Detection blocklist for AGENTS.md 0.1 / SPEC: public vendor and
+# provider-model names must not appear in tracked files. Listing a vendor
+# here is a rule, not an admission - it names many vendors across the
+# market and says nothing about which (if any) this author uses.
 PATTERNS = [
-    r"an inference provider", r"api\.the decision-model vendor", r"the decision-model vendor", r"integrate\.api\.the provider",
-    r"the provider", r"a general-purpose model", r"a model family-5", r"a model family", r"\bgpt-oss\b", r"a general-purpose model",
-    r"an inference provider", r"generativelanguage", r"api\.z\.ai", r"_API_KEY\s*=\s*\"",
+    r"openrouter", r"api\.typesafe", r"typesafe", r"integrate\.api\.nvidia",
+    r"nvidia", r"nemotron", r"glm-5", r"z-ai", r"\bgpt-oss\b", r"deepseek",
+    r"groq", r"generativelanguage", r"api\.z\.ai", r"_API_KEY\s*=\s*\"",
 ]
 
 ALLOW_HINTS = ("AGENTS.md", "privacy_check.py")
