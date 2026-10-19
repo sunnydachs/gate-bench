@@ -40,7 +40,7 @@ venv/
 config/local.toml
 traces/
 artifacts/
-results/
+# results/ holds curated result tables - kept in git
 .pytest_cache/
 *.egg-info/
 *.bak
